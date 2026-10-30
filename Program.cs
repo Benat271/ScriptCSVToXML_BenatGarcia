@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace ScriptCSVToXML;
 
-// Cada película del catálogo (una línea del CSV = un elemento <Pelicula> del XML)
+
 public class Pelicula
 {
     public string Title { get; set; } = "";
@@ -14,7 +14,7 @@ public class Pelicula
     public string ImdbScore { get; set; } = "";
     public string Language { get; set; } = "";
 
-    // Saca el año de la fecha de estreno (valen formatos como "August 5, 2019" o "05/08/2019")
+
     public int Anio()
     {
         Match m = Regex.Match(Premiere, @"\d{4}");
@@ -24,10 +24,10 @@ public class Pelicula
 
 public class Program
 {
-    // Si el CSV de Moodle da problemas con tildes, cambia a Encoding.Latin1
+
     static readonly Encoding Codificacion = Encoding.UTF8;
 
-    // Rutas por defecto (se pueden cambiar cuando el programa las pregunta)
+
     static string rutaCsv = "NetflixOriginals.csv";
     static string rutaXml = "NetflixOriginals.xml";
 
@@ -75,11 +75,8 @@ public class Program
         Console.WriteLine("¡Hasta luego!");
     }
 
-    // ---------------------------------------------------------------
-    //  Flujo principal de cada conversión
-    // ---------------------------------------------------------------
 
-    // tipo: 1 = todo, 2 = género, 3 = año, 4 = idioma
+
     static void ConvertirCsvAXml(int tipo)
     {
         string origen = PedirRuta("Ruta del archivo CSV", rutaCsv);
@@ -111,7 +108,7 @@ public class Program
         Console.WriteLine($"Hecho: {filtradas.Count} películas exportadas a {destino}");
     }
 
-    // Aplica el filtro elegido. Devuelve null si el usuario no puede continuar.
+
     static List<Pelicula>? Filtrar(List<Pelicula> peliculas, int tipo)
     {
         switch (tipo)
@@ -134,9 +131,7 @@ public class Program
         return null;
     }
 
-    // ---------------------------------------------------------------
-    //  CSV
-    // ---------------------------------------------------------------
+
 
     static List<Pelicula> LeerCsv(string ruta)
     {
@@ -144,16 +139,16 @@ public class Program
         string[] lineas = File.ReadAllLines(ruta, Codificacion);
         if (lineas.Length == 0) return lista;
 
-        // El separador puede ser coma o punto y coma según cómo se haya guardado el CSV
+
         char separador = lineas[0].Contains(';') && !lineas[0].Contains(',') ? ';' : ',';
 
-        // Empezamos en 1 para saltarnos la cabecera
+
         for (int i = 1; i < lineas.Length; i++)
         {
             if (string.IsNullOrWhiteSpace(lineas[i])) continue;
 
             List<string> campos = SepararLineaCsv(lineas[i], separador);
-            if (campos.Count < 6) continue; // línea incompleta
+            if (campos.Count < 6) continue;
 
             lista.Add(new Pelicula
             {
@@ -168,7 +163,7 @@ public class Program
         return lista;
     }
 
-    // Separa una línea respetando los campos entre comillas (un título puede llevar comas)
+
     static List<string> SepararLineaCsv(string linea, char separador)
     {
         var campos = new List<string>();
@@ -180,7 +175,7 @@ public class Program
             char c = linea[i];
             if (c == '"')
             {
-                // Dos comillas seguidas dentro de un campo = una comilla literal
+
                 if (entreComillas && i + 1 < linea.Length && linea[i + 1] == '"')
                 {
                     actual.Append('"');
@@ -217,7 +212,7 @@ public class Program
         }
     }
 
-    // Si el campo tiene comas, comillas o saltos de línea, se rodea de comillas
+
     static string EscaparCsv(string campo)
     {
         if (campo.Contains(',') || campo.Contains('"') || campo.Contains('\n'))
@@ -225,23 +220,21 @@ public class Program
         return campo;
     }
 
-    // ---------------------------------------------------------------
-    //  XML (teoría 2.2: XmlWriter para escribir, XmlDocument + XPath para leer)
-    // ---------------------------------------------------------------
+
 
     static void EscribirXml(List<Pelicula> peliculas, string ruta)
     {
         XmlWriterSettings ajustes = new XmlWriterSettings
         {
-            Indent = true,           // XML con sangrías, legible
+            Indent = true,
             Encoding = Codificacion
         };
 
-        // Create crea el archivo (¡si ya existe, lo sobrescribe!)
+
         using XmlWriter writer = XmlWriter.Create(ruta, ajustes);
 
         writer.WriteStartDocument();
-        writer.WriteStartElement("Peliculas");            // elemento raíz
+        writer.WriteStartElement("Peliculas");
 
         foreach (Pelicula p in peliculas)
         {
@@ -263,7 +256,7 @@ public class Program
             writer.WriteString(p.Runtime);
             writer.WriteEndElement();
 
-            writer.WriteStartElement("IMDBScore");        // sin espacio: no vale en un nombre de etiqueta
+            writer.WriteStartElement("IMDBScore");
             writer.WriteString(p.ImdbScore);
             writer.WriteEndElement();
 
@@ -271,10 +264,10 @@ public class Program
             writer.WriteString(p.Language);
             writer.WriteEndElement();
 
-            writer.WriteEndElement();                     // </Pelicula>
+            writer.WriteEndElement();
         }
 
-        writer.WriteEndElement();                         // </Peliculas>
+        writer.WriteEndElement();
         writer.WriteEndDocument();
         writer.Close();
     }
@@ -286,7 +279,7 @@ public class Program
         XmlDocument doc = new XmlDocument();
         doc.Load(ruta);
 
-        // XPath: todos los nodos Pelicula que cuelgan de la raíz Peliculas
+
         XmlNodeList? nodos = doc.SelectNodes("/Peliculas/Pelicula");
         if (nodos == null) return lista;
 
@@ -305,11 +298,9 @@ public class Program
         return lista;
     }
 
-    // ---------------------------------------------------------------
-    //  Utilidades de consola
-    // ---------------------------------------------------------------
 
-    // Primera pasada: saca la lista de valores distintos (géneros, idiomas...) y deja elegir uno
+
+
     static string ElegirDeLista(string nombre, IEnumerable<string> valores)
     {
         List<string> distintos = valores
@@ -344,7 +335,7 @@ public class Program
         return string.IsNullOrWhiteSpace(entrada) ? porDefecto : entrada.Trim().Trim('"');
     }
 
-    // XmlWriter.Create y StreamWriter sobrescriben sin avisar, así que preguntamos antes
+
     static bool ConfirmarSobrescritura(string ruta)
     {
         if (!File.Exists(ruta)) return true;

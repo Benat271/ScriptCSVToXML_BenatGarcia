@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Copia el CSV junto al ejecutable para poder usar la ruta por defecto -->
+    
     <None Update="NetflixOriginals.csv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
